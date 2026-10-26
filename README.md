@@ -1,4 +1,4 @@
-# nearby-ceps-api
+# cep-proximity-api
 
 API que recebe um CEP e devolve os CEPs encontrados a até 1 km. Cada item traz o CEP formatado e a distância em quilômetros. O CEP de origem fica de fora da lista.
 
