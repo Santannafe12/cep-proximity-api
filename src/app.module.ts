@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
+import { CacheModule } from './cache/cache.module';
 import { validateEnv } from './config/env.validation';
 
 @Module({
@@ -9,6 +10,7 @@ import { validateEnv } from './config/env.validation';
       isGlobal: true,
       validate: validateEnv,
     }),
+    CacheModule,
   ],
   controllers: [AppController],
 })

@@ -18,4 +18,17 @@ describe('validateEnv', () => {
       'PORT must be an integer from 1 to 65535',
     );
   });
+
+  it('defaults REDIS_URL when it is missing', () => {
+    expect(validateEnv({}).REDIS_URL).toBe('redis://localhost:6379');
+  });
+
+  it('accepts a redis URL and rejects other protocols', () => {
+    expect(
+      validateEnv({ REDIS_URL: 'rediss://cache.internal:6380' }).REDIS_URL,
+    ).toBe('rediss://cache.internal:6380');
+    expect(() => validateEnv({ REDIS_URL: 'http://localhost:6379' })).toThrow(
+      'REDIS_URL must be a redis or rediss URL',
+    );
+  });
 });
