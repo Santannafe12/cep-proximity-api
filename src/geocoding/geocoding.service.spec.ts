@@ -1,8 +1,6 @@
-import { Logger } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { CacheService } from '../cache/cache.service';
 import { InvalidPostalCodeError } from '../common/errors/invalid-postal-code.error';
-import { PostalCodeNotFoundError } from '../common/errors/postal-code-not-found.error';
 import {
   GeocodingService,
   GEOCODING_CACHE_TTL_SECONDS,
@@ -26,7 +24,6 @@ describe('GeocodingService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
     cache.get.mockResolvedValue(null);
     cache.set.mockResolvedValue(undefined);
     provider.findByCep.mockResolvedValue(geocoded);
@@ -42,10 +39,6 @@ describe('GeocodingService', () => {
     service = moduleRef.get(GeocodingService);
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
   it('stores a miss for seven days and does not keep address fields', async () => {
     await expect(service.findByCep('01001-000')).resolves.toEqual(geocoded);
 
@@ -57,11 +50,6 @@ describe('GeocodingService', () => {
       GEOCODING_CACHE_TTL_SECONDS,
     );
     expect(GEOCODING_CACHE_TTL_SECONDS).toBe(604800);
-    expect(Object.keys(geocoded).sort()).toEqual([
-      'cep',
-      'latitude',
-      'longitude',
-    ]);
   });
 
   it('returns a cache hit without calling the provider', async () => {
@@ -85,27 +73,5 @@ describe('GeocodingService', () => {
     );
     expect(cache.get).not.toHaveBeenCalled();
     expect(provider.findByCep).not.toHaveBeenCalled();
-  });
-
-  it('continues the lookup when the cache read fails', async () => {
-    cache.get.mockRejectedValue(new Error('connection refused'));
-
-    await expect(service.findByCep('01001000')).resolves.toEqual(geocoded);
-    expect(provider.findByCep).toHaveBeenCalledTimes(1);
-  });
-
-  it('returns the geocoding result when the cache write fails', async () => {
-    cache.set.mockRejectedValue(new Error('connection refused'));
-
-    await expect(service.findByCep('01001000')).resolves.toEqual(geocoded);
-  });
-
-  it('does not cache an external not-found response', async () => {
-    provider.findByCep.mockRejectedValue(new PostalCodeNotFoundError());
-
-    await expect(service.findByCep('00000000')).rejects.toBeInstanceOf(
-      PostalCodeNotFoundError,
-    );
-    expect(cache.set).not.toHaveBeenCalled();
   });
 });

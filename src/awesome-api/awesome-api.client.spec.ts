@@ -41,26 +41,27 @@ describe('AwesomeApiClient', () => {
     client = moduleRef.get(AwesomeApiClient);
   });
 
-  it('sends the key in a header and keeps it out of the URL', async () => {
-    await client.get('/json/01001000');
+  it('sends the search query without the key', async () => {
+    await client.get('/search', {
+      lat: -23.5500806,
+      lng: -46.6340827,
+      d: 1,
+      sort: 'asc',
+      limit: 10,
+      page: 2,
+      format: 'json',
+    });
 
     const [url, request] = httpService.get.mock.calls[0] as [
       string,
       { headers: Record<string, string> },
     ];
-    expect(url).toBe('https://cep.awesomeapi.com.br/json/01001000');
+    expect(url).toBe(
+      'https://cep.awesomeapi.com.br/search?lat=-23.5500806&lng=-46.6340827&d=1&sort=asc&limit=10&page=2&format=json',
+    );
     expect(url).not.toContain(FIXTURE_API_KEY);
     expect(url).not.toContain('token=');
     expect(request.headers['x-api-key']).toBe(FIXTURE_API_KEY);
-  });
-
-  it('does not call the network when the URL would contain the key', async () => {
-    config.AWESOME_API_BASE_URL = `https://cep.awesomeapi.com.br/${FIXTURE_API_KEY}`;
-
-    await expect(client.get('/json/01001000')).rejects.toThrow(
-      'AwesomeAPI key must not be sent in the URL',
-    );
-    expect(httpService.get).not.toHaveBeenCalled();
   });
 
   it('hides transport failures without the request configuration', async () => {

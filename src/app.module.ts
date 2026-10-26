@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { CacheModule } from './cache/cache.module';
 import { GeocodingModule } from './geocoding/geocoding.module';
+import { NearbyPostalCodesModule } from './nearby-postal-codes/nearby-postal-codes.module';
 import { validateEnv } from './config/env.validation';
 
 @Module({
@@ -13,6 +14,7 @@ import { validateEnv } from './config/env.validation';
     }),
     CacheModule,
     GeocodingModule,
+    NearbyPostalCodesModule,
   ],
   controllers: [AppController],
 })

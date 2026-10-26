@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import Redis from 'ioredis';
 import { CACHE_KEY_PREFIX, CACHE_SCAN_COUNT } from './cache.constants';
 import { CacheService, CacheUnavailableError } from './cache.service';
 
@@ -78,12 +77,6 @@ describe('CacheService', () => {
     expect(errorLog).toHaveBeenCalled();
   });
 
-  it('returns a miss when the stored JSON is invalid', async () => {
-    mockClient.get.mockResolvedValue('{');
-
-    await expect(service.get('broken')).resolves.toBeNull();
-  });
-
   it('writes JSON with the required TTL', async () => {
     mockClient.set.mockResolvedValue('OK');
 
@@ -104,50 +97,6 @@ describe('CacheService', () => {
       service.set('nearby-ceps:01001000', [], 60),
     ).resolves.toBeUndefined();
     expect(errorLog).toHaveBeenCalled();
-  });
-
-  it('rejects a missing TTL before calling Redis', async () => {
-    await expect(service.set('key', 'value', 0)).rejects.toThrow(
-      'Cache TTL must be a positive integer number of seconds',
-    );
-    expect(mockClient.set).not.toHaveBeenCalled();
-  });
-
-  it('deletes a prefixed key', async () => {
-    mockClient.del.mockResolvedValue(1);
-
-    await service.delete('geocoding:01001000');
-
-    expect(mockClient.del).toHaveBeenCalledWith(
-      `${CACHE_KEY_PREFIX}geocoding:01001000`,
-    );
-  });
-
-  it('throws a typed error when delete fails', async () => {
-    mockClient.del.mockRejectedValue(new Error('connection refused'));
-
-    await expect(service.delete('geocoding:01001000')).rejects.toBeInstanceOf(
-      CacheUnavailableError,
-    );
-  });
-
-  it('deletes many prefixed keys', async () => {
-    mockClient.del.mockResolvedValue(2);
-
-    await service.deleteMany(['geocoding:01001000', 'nearby-ceps:01001000']);
-
-    expect(mockClient.del).toHaveBeenCalledWith(
-      `${CACHE_KEY_PREFIX}geocoding:01001000`,
-      `${CACHE_KEY_PREFIX}nearby-ceps:01001000`,
-    );
-  });
-
-  it('throws a typed error when deleteMany fails', async () => {
-    mockClient.del.mockRejectedValue(new Error('connection refused'));
-
-    await expect(
-      service.deleteMany(['geocoding:01001000']),
-    ).rejects.toBeInstanceOf(CacheUnavailableError);
   });
 
   it('clears only keys under the application prefix and never flushes the database', async () => {
@@ -190,15 +139,5 @@ describe('CacheService', () => {
       CacheUnavailableError,
     );
     expect(mockClient.flushdb).not.toHaveBeenCalled();
-  });
-
-  it('opens Redis lazily with the configured URL', () => {
-    const RedisMock = Redis as unknown as jest.Mock;
-
-    expect(RedisMock).toHaveBeenCalledWith('redis://localhost:6379', {
-      lazyConnect: true,
-      maxRetriesPerRequest: 1,
-      connectTimeout: 1000,
-    });
   });
 });

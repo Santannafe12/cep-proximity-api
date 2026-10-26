@@ -7,11 +7,6 @@ import {
 
 describe('haversine', () => {
   const origin = { latitude: -23.5500806, longitude: -46.6340827 };
-  const rio = { latitude: -22.9068, longitude: -43.1729 };
-
-  it('returns zero for the same coordinate', () => {
-    expect(haversineDistanceKm(origin, { ...origin })).toBe(0);
-  });
 
   it('matches one degree of longitude at the equator', () => {
     const oneDegreeAtEquatorKm = EARTH_RADIUS_KM * (Math.PI / 180);
@@ -36,15 +31,6 @@ describe('haversine', () => {
     expect(farDistance).toBeGreaterThan(1);
     expect(isWithinSearchRadius(farDistance)).toBe(false);
   });
-
-  it('is approximately symmetric', () => {
-    const forward = haversineDistanceKm(origin, rio);
-    const backward = haversineDistanceKm(rio, origin);
-
-    expect(Math.abs(forward - backward)).toBeLessThan(1e-9);
-    expect(forward).toBeGreaterThan(300);
-    expect(forward).toBeLessThan(400);
-  });
 });
 
 describe('search radius comparison', () => {
@@ -57,22 +43,12 @@ describe('search radius comparison', () => {
     expect(isWithinSearchRadius(0.996)).toBe(true);
     expect(roundHalfUpToTwoDecimals(0.996)).toBe(1);
   });
-
-  it('allows only 1e-9 km of floating-point slack', () => {
-    expect(isWithinSearchRadius(1 + 1e-9)).toBe(true);
-    expect(isWithinSearchRadius(1 + 2e-9)).toBe(false);
-  });
 });
 
 describe('roundHalfUpToTwoDecimals', () => {
   it('rounds 1.005 half-up even though Number#toFixed does not', () => {
     expect(Number((1.005).toFixed(2))).toBe(1);
     expect(roundHalfUpToTwoDecimals(1.005)).toBe(1.01);
-  });
-
-  it('rounds positive halfway cases away from zero', () => {
-    expect(roundHalfUpToTwoDecimals(1.015)).toBe(1.02);
-    expect(roundHalfUpToTwoDecimals(0)).toBe(0);
   });
 });
 

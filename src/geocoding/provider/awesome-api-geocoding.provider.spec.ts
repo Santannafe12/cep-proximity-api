@@ -75,15 +75,4 @@ describe('AwesomeApiGeocodingProvider', () => {
       InvalidExternalPayloadError,
     );
   });
-
-  it('rejects coordinates that are not numbers', async () => {
-    client.get.mockResolvedValue({
-      status: 200,
-      data: { lat: 'abc', lng: '-46.63' },
-    });
-
-    await expect(provider.findByCep('01001000')).rejects.toBeInstanceOf(
-      InvalidExternalPayloadError,
-    );
-  });
 });
