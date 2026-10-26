@@ -1,5 +1,12 @@
 import { AWESOME_API_DEFAULT_BASE_URL } from '../awesome-api/awesome-api.types';
 import { DEFAULT_REDIS_URL } from '../cache/cache.constants';
+import {
+  DEFAULT_AWESOME_API_RATE_LIMIT_MAX,
+  DEFAULT_AWESOME_API_RATE_LIMIT_WINDOW_MS,
+  DEFAULT_AWESOME_API_TIMEOUT_MS,
+  DEFAULT_INBOUND_RATE_LIMIT_MAX,
+  DEFAULT_INBOUND_RATE_LIMIT_WINDOW_MS,
+} from '../common/constants/awesome-api.constants';
 
 type EnvConfig = Record<string, unknown>;
 
@@ -10,6 +17,29 @@ export function validateEnv(config: EnvConfig): EnvConfig {
     REDIS_URL: parseRedisUrl(config.REDIS_URL),
     AWESOME_API_BASE_URL: parseAwesomeApiBaseUrl(config.AWESOME_API_BASE_URL),
     AWESOME_API_KEY: parseAwesomeApiKey(config.AWESOME_API_KEY),
+    AWESOME_API_TIMEOUT_MS: parseAwesomeApiTimeout(
+      config.AWESOME_API_TIMEOUT_MS,
+    ),
+    INBOUND_RATE_LIMIT_MAX: parsePositiveInteger(
+      config.INBOUND_RATE_LIMIT_MAX,
+      DEFAULT_INBOUND_RATE_LIMIT_MAX,
+      'INBOUND_RATE_LIMIT_MAX',
+    ),
+    INBOUND_RATE_LIMIT_WINDOW_MS: parsePositiveInteger(
+      config.INBOUND_RATE_LIMIT_WINDOW_MS,
+      DEFAULT_INBOUND_RATE_LIMIT_WINDOW_MS,
+      'INBOUND_RATE_LIMIT_WINDOW_MS',
+    ),
+    AWESOME_API_RATE_LIMIT_MAX: parsePositiveInteger(
+      config.AWESOME_API_RATE_LIMIT_MAX,
+      DEFAULT_AWESOME_API_RATE_LIMIT_MAX,
+      'AWESOME_API_RATE_LIMIT_MAX',
+    ),
+    AWESOME_API_RATE_LIMIT_WINDOW_MS: parsePositiveInteger(
+      config.AWESOME_API_RATE_LIMIT_WINDOW_MS,
+      DEFAULT_AWESOME_API_RATE_LIMIT_WINDOW_MS,
+      'AWESOME_API_RATE_LIMIT_WINDOW_MS',
+    ),
   };
 }
 
@@ -72,6 +102,37 @@ function parseAwesomeApiBaseUrl(rawBaseUrl: unknown): string {
   }
 
   throw new Error('AWESOME_API_BASE_URL must be an http or https URL');
+}
+
+function parseAwesomeApiTimeout(rawTimeout: unknown): number {
+  if (rawTimeout === undefined || rawTimeout === '') {
+    return DEFAULT_AWESOME_API_TIMEOUT_MS;
+  }
+
+  const timeout =
+    typeof rawTimeout === 'number' ? rawTimeout : Number(rawTimeout);
+  if (!Number.isInteger(timeout) || timeout < 1) {
+    throw new Error('AWESOME_API_TIMEOUT_MS must be a positive integer');
+  }
+
+  return timeout;
+}
+
+function parsePositiveInteger(
+  raw: unknown,
+  fallback: number,
+  name: string,
+): number {
+  if (raw === undefined || raw === '') {
+    return fallback;
+  }
+
+  const value = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isInteger(value) || value < 1) {
+    throw new Error(`${name} must be a positive integer`);
+  }
+
+  return value;
 }
 
 function parseAwesomeApiKey(rawApiKey: unknown): string {

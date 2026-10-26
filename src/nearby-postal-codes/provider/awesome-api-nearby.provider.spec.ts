@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { AwesomeApiClient } from '../../awesome-api/awesome-api.client';
+import { DEFAULT_AWESOME_API_TIMEOUT_MS } from '../../common/constants/awesome-api.constants';
 import { ExternalServiceError } from '../../common/errors/external-service.error';
 import { InvalidExternalPayloadError } from '../../common/errors/invalid-external-payload.error';
 import { AwesomeApiNearbyProvider } from './awesome-api-nearby.provider';
@@ -81,6 +82,40 @@ describe('AwesomeApiNearbyProvider', () => {
         page,
         format: 'json',
       });
+    }
+  });
+
+  it('keeps paging when the pages together last longer than one request timeout', async () => {
+    const pageDelayMs = Math.floor(DEFAULT_AWESOME_API_TIMEOUT_MS / 2) + 1;
+    jest.useFakeTimers();
+    try {
+      client.get.mockImplementation((_path: string, query: SearchQuery) => {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const start = (query.page - 1) * 10;
+            const size = query.page === 3 ? 5 : 10;
+            resolve(
+              ok(
+                25,
+                Array.from({ length: size }, (_, offset) =>
+                  rawItem(cepAt(start + offset)),
+                ),
+              ),
+            );
+          }, pageDelayMs);
+        });
+      });
+
+      const pending = provider.findByCoordinates(latitude, longitude);
+      await jest.advanceTimersByTimeAsync(pageDelayMs);
+      await jest.advanceTimersByTimeAsync(pageDelayMs);
+      await jest.advanceTimersByTimeAsync(pageDelayMs);
+
+      await expect(pending).resolves.toHaveLength(25);
+      expect(client.get).toHaveBeenCalledTimes(3);
+      expect(pageDelayMs * 3).toBeGreaterThan(DEFAULT_AWESOME_API_TIMEOUT_MS);
+    } finally {
+      jest.useRealTimers();
     }
   });
 

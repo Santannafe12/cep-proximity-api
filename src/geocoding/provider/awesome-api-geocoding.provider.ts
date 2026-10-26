@@ -23,7 +23,7 @@ export class AwesomeApiGeocodingProvider implements GeocodingProvider {
     }
 
     if (result.status !== 200) {
-      throw new ExternalServiceError();
+      throw new ExternalServiceError(result.status);
     }
 
     return parseGeocodedPostalCode(cep, result.data);

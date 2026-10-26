@@ -1,15 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { ExternalServiceError } from '../common/errors/external-service.error';
+import { AwesomeApiRateLimiter } from './awesome-api-rate-limiter';
 import { AwesomeApiHttpResult } from './awesome-api.types';
 
 @Injectable()
 export class AwesomeApiClient {
+  private readonly logger = new Logger(AwesomeApiClient.name);
+
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
+    private readonly rateLimiter: AwesomeApiRateLimiter,
   ) {}
 
   async get<T>(
@@ -22,19 +26,33 @@ export class AwesomeApiClient {
 
     const apiKey = this.configService.getOrThrow<string>('AWESOME_API_KEY');
     const url = this.requestUrl(path, apiKey, query);
+    const timeoutMs = this.configService.getOrThrow<number>(
+      'AWESOME_API_TIMEOUT_MS',
+    );
+    await this.rateLimiter.acquire();
+    const startedAt = Date.now();
+    let response: { status: number; data: T };
 
     try {
-      const response = await firstValueFrom(
+      response = await firstValueFrom(
         this.httpService.get<T>(url, {
           headers: { 'x-api-key': apiKey },
+          timeout: timeoutMs,
           validateStatus: () => true,
         }),
       );
-
-      return { status: response.status, data: response.data };
-    } catch {
-      throw new ExternalServiceError();
+    } catch (error: unknown) {
+      const status = isTimeoutError(error) ? 'timeout' : 'unavailable';
+      this.logger.error(
+        `operation=${path} status=${status} durationMs=${Date.now() - startedAt}`,
+      );
+      throw new ExternalServiceError(status);
     }
+
+    this.logger.log(
+      `operation=${path} status=${response.status} durationMs=${Date.now() - startedAt}`,
+    );
+    return { status: response.status, data: response.data };
   }
 
   private requestUrl(
@@ -63,4 +81,12 @@ export class AwesomeApiClient {
       .getOrThrow<string>('AWESOME_API_BASE_URL')
       .replace(/\/$/, '');
   }
+}
+
+function isTimeoutError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null || !('code' in error)) {
+    return false;
+  }
+
+  return error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT';
 }

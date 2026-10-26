@@ -34,7 +34,7 @@ export class AwesomeApiNearbyProvider implements NearbyPostalCodesProvider {
       });
 
       if (result.status !== 200) {
-        throw new ExternalServiceError();
+        throw new ExternalServiceError(result.status);
       }
 
       const parsed = parseSearchPage(result.data);
