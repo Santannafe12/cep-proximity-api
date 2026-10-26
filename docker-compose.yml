@@ -1,0 +1,17 @@
+name: nearby-ceps-api
+
+services:
+  api:
+    build: .
+    image: nearby-ceps-api
+    env_file:
+      - .env
+    environment:
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
