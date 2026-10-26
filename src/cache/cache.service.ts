@@ -71,15 +71,15 @@ export class CacheService implements OnModuleDestroy {
     }
   }
 
-  async deleteMany(keys: string[]): Promise<void> {
+  async deleteMany(keys: string[]): Promise<number> {
     if (keys.length === 0) {
-      return;
+      return 0;
     }
 
     const physicalKeys = keys.map((key) => this.toPhysicalKey(key));
 
     try {
-      await this.client.del(...physicalKeys);
+      return await this.client.del(...physicalKeys);
     } catch (error: unknown) {
       this.logFailure('deleteMany', error);
       throw new CacheUnavailableError('deleteMany', error);

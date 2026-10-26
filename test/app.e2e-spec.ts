@@ -4,7 +4,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { throwError } from 'rxjs';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { CacheService } from './../src/cache/cache.service';
+import {
+  CacheService,
+  CacheUnavailableError,
+} from './../src/cache/cache.service';
 import { ApiExceptionFilter } from './../src/common/filters/api-exception.filter';
 import { ExternalServiceError } from './../src/common/errors/external-service.error';
 import { PostalCodeNotFoundError } from './../src/common/errors/postal-code-not-found.error';
@@ -35,6 +38,8 @@ describe('API (e2e)', () => {
   const cache = {
     get: jest.fn(),
     set: jest.fn(),
+    deleteMany: jest.fn(),
+    clearByPrefix: jest.fn(),
     onModuleDestroy: jest.fn(),
   };
 
@@ -43,6 +48,8 @@ describe('API (e2e)', () => {
     process.env.AWESOME_API_KEY = 'fixture';
     cache.get.mockResolvedValue(null);
     cache.set.mockResolvedValue(undefined);
+    cache.deleteMany.mockResolvedValue(0);
+    cache.clearByPrefix.mockResolvedValue(0);
     geocoding.findByCep.mockResolvedValue({
       cep: '01001000',
       latitude: origin.latitude,
@@ -84,17 +91,99 @@ describe('API (e2e)', () => {
 
   it('returns 429 after the inbound limit and still serves health', async () => {
     const first = await request(server()).get('/ceps-proximos/36.000-000');
-    const limited = await request(server()).get('/ceps-proximos/36.000-000');
+    const limitedRead = await request(server()).get(
+      '/ceps-proximos/36.000-000',
+    );
+    const deleted = await request(server()).delete('/cache/ceps/01001000');
+    const limitedDelete = await request(server()).delete(
+      '/cache/ceps/01001000',
+    );
     const health = await request(server()).get('/health');
 
     expect(first.status).toBe(400);
-    expect(limited.status).toBe(429);
-    expect(limited.body).toEqual({
+    expect(limitedRead.status).toBe(429);
+    expect(deleted.status).toBe(200);
+    expect(limitedDelete.status).toBe(429);
+    expect(limitedDelete.body).toEqual({
       statusCode: 429,
       message: 'ThrottlerException: Too Many Requests',
     });
     expect(health.status).toBe(200);
     expect(health.body).toEqual({ status: 'ok' });
+  });
+
+  it('treats the next lookup as a miss after deleting one postal code', async () => {
+    const stored = new Map<string, unknown>([
+      ['nearby-ceps:01001000', [{ cep: '99999-999', distancia_km: 0.1 }]],
+      [
+        'geocoding:01001000',
+        {
+          cep: '01001000',
+          latitude: origin.latitude,
+          longitude: origin.longitude,
+        },
+      ],
+    ]);
+    cache.get.mockImplementation((key: string) =>
+      Promise.resolve(stored.get(key) ?? null),
+    );
+    cache.deleteMany.mockImplementation((keys: string[]) => {
+      let removed = 0;
+      for (const key of keys) {
+        if (stored.delete(key)) {
+          removed += 1;
+        }
+      }
+      return Promise.resolve(removed);
+    });
+    nearby.findByCoordinates.mockResolvedValue([candidate('01310100', close)]);
+
+    const deleted = await request(server()).delete('/cache/ceps/01001-000');
+    const response = await request(server()).get('/ceps-proximos/01001-000');
+
+    expect(deleted.status).toBe(200);
+    expect(deleted.body).toEqual({ removed: 2 });
+    expect(cache.deleteMany).toHaveBeenCalledWith([
+      'geocoding:01001000',
+      'nearby-ceps:01001000',
+    ]);
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([listed('01310100', close)]);
+    expect(geocoding.findByCep).toHaveBeenCalledWith('01001000');
+    expect(nearby.findByCoordinates).toHaveBeenCalled();
+  });
+
+  it('DELETE /cache/ceps/:cep returns 400 for an invalid postal code', async () => {
+    const response = await request(server()).delete('/cache/ceps/36.000-000');
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: 'Invalid postal code',
+    });
+    expect(cache.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 when Redis fails during cache invalidation', async () => {
+    cache.deleteMany.mockRejectedValue(new CacheUnavailableError('deleteMany'));
+
+    const response = await request(server()).delete('/cache/ceps/01001000');
+
+    expect(response.status).toBe(503);
+    expect(response.body).toEqual({
+      statusCode: 503,
+      message: 'Redis deleteMany failed',
+    });
+  });
+
+  it('DELETE /cache/ceps reports how many application keys were removed', async () => {
+    cache.clearByPrefix.mockResolvedValue(3);
+
+    const response = await request(server()).delete('/cache/ceps');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ removed: 3 });
+    expect(cache.clearByPrefix).toHaveBeenCalledWith('');
   });
 
   it('GET /ceps-proximos/:cep filters, deduplicates, orders and excludes the queried CEP', async () => {

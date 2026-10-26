@@ -6,6 +6,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { CacheUnavailableError } from '../../cache/cache.service';
 import { ExternalServiceError } from '../errors/external-service.error';
 import { InvalidExternalPayloadError } from '../errors/invalid-external-payload.error';
 import { InvalidPostalCodeError } from '../errors/invalid-postal-code.error';
@@ -37,7 +38,8 @@ function mapException(exception: unknown): {
 
   if (
     exception instanceof ExternalServiceError ||
-    exception instanceof InvalidExternalPayloadError
+    exception instanceof InvalidExternalPayloadError ||
+    exception instanceof CacheUnavailableError
   ) {
     return {
       statusCode: HttpStatus.SERVICE_UNAVAILABLE,
