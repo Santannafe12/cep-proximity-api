@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { ExternalServiceError } from '../common/errors/external-service.error';
+import { ExternalServiceError } from '../common/errors';
 import { AwesomeApiRateLimiter } from './awesome-api-rate-limiter';
 import { AwesomeApiHttpResult } from './awesome-api.types';
 

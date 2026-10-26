@@ -1,14 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { AwesomeApiClient } from '../../awesome-api/awesome-api.client';
 import { GeocodedPostalCode } from '../../awesome-api/awesome-api.types';
-import { InvalidExternalPayloadError } from '../../common/errors/invalid-external-payload.error';
-import { InvalidPostalCodeError } from '../../common/errors/invalid-postal-code.error';
-import { PostalCodeNotFoundError } from '../../common/errors/postal-code-not-found.error';
-import { ExternalServiceError } from '../../common/errors/external-service.error';
-import { GeocodingProvider } from './geocoding-provider.interface';
+import {
+  ExternalServiceError,
+  InvalidExternalPayloadError,
+  InvalidPostalCodeError,
+  PostalCodeNotFoundError,
+} from '../../common/errors';
 
 @Injectable()
-export class AwesomeApiGeocodingProvider implements GeocodingProvider {
+export class AwesomeApiGeocodingProvider {
   constructor(private readonly client: AwesomeApiClient) {}
 
   async findByCep(cep: string): Promise<GeocodedPostalCode> {

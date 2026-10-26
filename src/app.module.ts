@@ -3,9 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
-import { CacheModule } from './cache/cache.module';
-import { GeocodingModule } from './geocoding/geocoding.module';
-import { NearbyPostalCodesModule } from './nearby-postal-codes/nearby-postal-codes.module';
 import { PostalCodesModule } from './postal-codes/postal-codes.module';
 import { validateEnv } from './config/env.validation';
 
@@ -29,9 +26,6 @@ import { validateEnv } from './config/env.validation';
         ],
       }),
     }),
-    CacheModule,
-    GeocodingModule,
-    NearbyPostalCodesModule,
     PostalCodesModule,
   ],
   controllers: [AppController],

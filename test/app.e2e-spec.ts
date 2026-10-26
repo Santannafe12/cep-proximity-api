@@ -4,21 +4,21 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { throwError } from 'rxjs';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import {
-  CacheService,
-  CacheUnavailableError,
-} from './../src/cache/cache.service';
+import { CacheService } from './../src/cache/cache.service';
 import { ApiExceptionFilter } from './../src/common/filters/api-exception.filter';
-import { ExternalServiceError } from './../src/common/errors/external-service.error';
-import { PostalCodeNotFoundError } from './../src/common/errors/postal-code-not-found.error';
+import {
+  CacheUnavailableError,
+  ExternalServiceError,
+  PostalCodeNotFoundError,
+} from './../src/common/errors';
 import {
   EARTH_RADIUS_KM,
   haversineDistanceKm,
   roundHalfUpToTwoDecimals,
 } from './../src/common/utils/haversine';
 import { formatPostalCode } from './../src/common/utils/postal-code';
-import { GEOCODING_PROVIDER } from './../src/geocoding/provider/geocoding-provider.interface';
-import { NEARBY_POSTAL_CODES_PROVIDER } from './../src/nearby-postal-codes/provider/nearby-postal-codes-provider.interface';
+import { AwesomeApiGeocodingProvider } from './../src/geocoding/provider/awesome-api-geocoding.provider';
+import { AwesomeApiNearbyProvider } from './../src/nearby-postal-codes/provider/awesome-api-nearby.provider';
 import { NEARBY_CACHE_TTL_SECONDS } from './../src/postal-codes/postal-codes.service';
 import { AppModule } from './../src/app.module';
 
@@ -62,9 +62,9 @@ describe('API (e2e)', () => {
     })
       .overrideProvider(CacheService)
       .useValue(cache)
-      .overrideProvider(GEOCODING_PROVIDER)
+      .overrideProvider(AwesomeApiGeocodingProvider)
       .useValue(geocoding)
-      .overrideProvider(NEARBY_POSTAL_CODES_PROVIDER)
+      .overrideProvider(AwesomeApiNearbyProvider)
       .useValue(nearby)
       .compile();
 

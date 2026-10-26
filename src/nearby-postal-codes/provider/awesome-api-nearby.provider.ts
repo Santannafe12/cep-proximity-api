@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { AwesomeApiClient } from '../../awesome-api/awesome-api.client';
-import { ExternalServiceError } from '../../common/errors/external-service.error';
-import { InvalidExternalPayloadError } from '../../common/errors/invalid-external-payload.error';
+import {
+  ExternalServiceError,
+  InvalidExternalPayloadError,
+} from '../../common/errors';
 import { normalizePostalCode } from '../../common/utils/postal-code';
 import { NearbyPostalCodeCandidate } from '../nearby-postal-code-candidate';
-import { NearbyPostalCodesProvider } from './nearby-postal-codes-provider.interface';
 
 const SEARCH_PAGE_SIZE = 10;
 const MAX_SEARCH_PAGES = 500;
 
 @Injectable()
-export class AwesomeApiNearbyProvider implements NearbyPostalCodesProvider {
+export class AwesomeApiNearbyProvider {
   constructor(private readonly client: AwesomeApiClient) {}
 
   async findByCoordinates(

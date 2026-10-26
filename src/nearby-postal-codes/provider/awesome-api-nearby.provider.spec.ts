@@ -1,8 +1,10 @@
 import { Test } from '@nestjs/testing';
 import { AwesomeApiClient } from '../../awesome-api/awesome-api.client';
-import { DEFAULT_AWESOME_API_TIMEOUT_MS } from '../../common/constants/awesome-api.constants';
-import { ExternalServiceError } from '../../common/errors/external-service.error';
-import { InvalidExternalPayloadError } from '../../common/errors/invalid-external-payload.error';
+import { DEFAULT_AWESOME_API_TIMEOUT_MS } from '../../config/env.validation';
+import {
+  ExternalServiceError,
+  InvalidExternalPayloadError,
+} from '../../common/errors';
 import { AwesomeApiNearbyProvider } from './awesome-api-nearby.provider';
 
 type SearchQuery = {

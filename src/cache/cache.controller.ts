@@ -1,5 +1,5 @@
 import { Controller, Delete, Param } from '@nestjs/common';
-import { InvalidPostalCodeError } from '../common/errors/invalid-postal-code.error';
+import { InvalidPostalCodeError } from '../common/errors';
 import {
   isValidPostalCode,
   normalizePostalCode,

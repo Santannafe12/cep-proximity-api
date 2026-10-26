@@ -1,25 +1,19 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { GeocodedPostalCode } from '../awesome-api/awesome-api.types';
 import { CacheService } from '../cache/cache.service';
-import { InvalidPostalCodeError } from '../common/errors/invalid-postal-code.error';
+import { InvalidPostalCodeError } from '../common/errors';
 import {
   isValidPostalCode,
   normalizePostalCode,
 } from '../common/utils/postal-code';
-import {
-  GEOCODING_PROVIDER,
-  GeocodingProvider,
-} from './provider/geocoding-provider.interface';
+import { AwesomeApiGeocodingProvider } from './provider/awesome-api-geocoding.provider';
 
 export const GEOCODING_CACHE_TTL_SECONDS = 604800;
 
 @Injectable()
 export class GeocodingService {
-  private readonly logger = new Logger(GeocodingService.name);
-
   constructor(
-    @Inject(GEOCODING_PROVIDER)
-    private readonly provider: GeocodingProvider,
+    private readonly provider: AwesomeApiGeocodingProvider,
     private readonly cache: CacheService,
   ) {}
 
@@ -36,39 +30,23 @@ export class GeocodingService {
     }
 
     const geocoded = await this.provider.findByCep(normalizedCep);
-    await this.writeCache(cacheKey, geocoded);
+    await this.cache.set(cacheKey, geocoded, GEOCODING_CACHE_TTL_SECONDS);
     return geocoded;
   }
 
   private async readCache(
     cacheKey: string,
   ): Promise<GeocodedPostalCode | null> {
-    try {
-      const cached = await this.cache.get<unknown>(cacheKey);
-      if (!isGeocodedPostalCode(cached)) {
-        return null;
-      }
-
-      return {
-        cep: cached.cep,
-        latitude: cached.latitude,
-        longitude: cached.longitude,
-      };
-    } catch (error: unknown) {
-      this.logger.error(`Geocoding cache read failed: ${errorText(error)}`);
+    const cached = await this.cache.get<unknown>(cacheKey);
+    if (!isGeocodedPostalCode(cached)) {
       return null;
     }
-  }
 
-  private async writeCache(
-    cacheKey: string,
-    geocoded: GeocodedPostalCode,
-  ): Promise<void> {
-    try {
-      await this.cache.set(cacheKey, geocoded, GEOCODING_CACHE_TTL_SECONDS);
-    } catch (error: unknown) {
-      this.logger.error(`Geocoding cache write failed: ${errorText(error)}`);
-    }
+    return {
+      cep: cached.cep,
+      latitude: cached.latitude,
+      longitude: cached.longitude,
+    };
   }
 }
 
@@ -85,8 +63,4 @@ function isGeocodedPostalCode(value: unknown): value is GeocodedPostalCode {
     typeof record.longitude === 'number' &&
     Number.isFinite(record.longitude)
   );
-}
-
-function errorText(error: unknown): string {
-  return error instanceof Error ? error.message : 'Unknown cache error';
 }

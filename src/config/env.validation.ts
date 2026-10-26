@@ -1,12 +1,16 @@
 import { AWESOME_API_DEFAULT_BASE_URL } from '../awesome-api/awesome-api.types';
-import { DEFAULT_REDIS_URL } from '../cache/cache.constants';
-import {
-  DEFAULT_AWESOME_API_RATE_LIMIT_MAX,
-  DEFAULT_AWESOME_API_RATE_LIMIT_WINDOW_MS,
-  DEFAULT_AWESOME_API_TIMEOUT_MS,
-  DEFAULT_INBOUND_RATE_LIMIT_MAX,
-  DEFAULT_INBOUND_RATE_LIMIT_WINDOW_MS,
-} from '../common/constants/awesome-api.constants';
+
+export const DEFAULT_REDIS_URL = 'redis://localhost:6379';
+
+export const DEFAULT_AWESOME_API_TIMEOUT_MS = 5000;
+
+export const DEFAULT_AWESOME_API_RATE_LIMIT_MAX = 5;
+
+export const DEFAULT_AWESOME_API_RATE_LIMIT_WINDOW_MS = 1000;
+
+export const DEFAULT_INBOUND_RATE_LIMIT_MAX = 30;
+
+export const DEFAULT_INBOUND_RATE_LIMIT_WINDOW_MS = 60000;
 
 type EnvConfig = Record<string, unknown>;
 

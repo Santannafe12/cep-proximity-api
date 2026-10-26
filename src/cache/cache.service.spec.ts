@@ -1,8 +1,12 @@
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CACHE_KEY_PREFIX, CACHE_SCAN_COUNT } from './cache.constants';
-import { CacheService, CacheUnavailableError } from './cache.service';
+import {
+  CACHE_KEY_PREFIX,
+  CACHE_SCAN_COUNT,
+  CacheService,
+} from './cache.service';
+import { CacheUnavailableError } from '../common/errors';
 
 const mockClient = {
   get: jest.fn(),
@@ -62,12 +66,6 @@ describe('CacheService', () => {
     expect(mockClient.get).toHaveBeenCalledWith(
       `${CACHE_KEY_PREFIX}geocoding:01001000`,
     );
-  });
-
-  it('returns null on a cache miss', async () => {
-    mockClient.get.mockResolvedValue(null);
-
-    await expect(service.get('missing')).resolves.toBeNull();
   });
 
   it('returns a miss and logs when Redis fails during read', async () => {

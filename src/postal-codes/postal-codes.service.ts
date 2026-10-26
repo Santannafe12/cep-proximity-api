@@ -1,9 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CacheService } from '../cache/cache.service';
-import { ExternalServiceError } from '../common/errors/external-service.error';
-import { InvalidExternalPayloadError } from '../common/errors/invalid-external-payload.error';
-import { InvalidPostalCodeError } from '../common/errors/invalid-postal-code.error';
-import { PostalCodeNotFoundError } from '../common/errors/postal-code-not-found.error';
+import {
+  ExternalServiceError,
+  InvalidExternalPayloadError,
+  InvalidPostalCodeError,
+  PostalCodeNotFoundError,
+} from '../common/errors';
 import {
   haversineDistanceKm,
   isWithinSearchRadius,
@@ -16,7 +18,7 @@ import {
 } from '../common/utils/postal-code';
 import { GeocodingService } from '../geocoding/geocoding.service';
 import { NearbyPostalCodeCandidate } from '../nearby-postal-codes/nearby-postal-code-candidate';
-import { NearbyPostalCodesService } from '../nearby-postal-codes/nearby-postal-codes.service';
+import { AwesomeApiNearbyProvider } from '../nearby-postal-codes/provider/awesome-api-nearby.provider';
 import { NearbyPostalCodeResponse } from './dto/nearby-postal-code.response';
 
 export const NEARBY_CACHE_TTL_SECONDS = 21600;
@@ -27,7 +29,7 @@ export class PostalCodesService {
 
   constructor(
     private readonly geocoding: GeocodingService,
-    private readonly nearbyPostalCodes: NearbyPostalCodesService,
+    private readonly nearbyPostalCodes: AwesomeApiNearbyProvider,
     private readonly cache: CacheService,
   ) {}
 

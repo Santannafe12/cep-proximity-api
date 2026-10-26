@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { Test } from '@nestjs/testing';
 import { throwError, of } from 'rxjs';
-import { DEFAULT_AWESOME_API_TIMEOUT_MS } from '../common/constants/awesome-api.constants';
-import { ExternalServiceError } from '../common/errors/external-service.error';
+import { DEFAULT_AWESOME_API_TIMEOUT_MS } from '../config/env.validation';
+import { ExternalServiceError } from '../common/errors';
 import { AwesomeApiClient } from './awesome-api.client';
 import { AwesomeApiRateLimiter } from './awesome-api-rate-limiter';
 

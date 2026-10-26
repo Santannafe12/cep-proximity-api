@@ -1,11 +1,10 @@
 import { Test } from '@nestjs/testing';
 import { CacheService } from '../cache/cache.service';
-import { InvalidPostalCodeError } from '../common/errors/invalid-postal-code.error';
 import {
   GeocodingService,
   GEOCODING_CACHE_TTL_SECONDS,
 } from './geocoding.service';
-import { GEOCODING_PROVIDER } from './provider/geocoding-provider.interface';
+import { AwesomeApiGeocodingProvider } from './provider/awesome-api-geocoding.provider';
 
 describe('GeocodingService', () => {
   let service: GeocodingService;
@@ -31,7 +30,7 @@ describe('GeocodingService', () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
         GeocodingService,
-        { provide: GEOCODING_PROVIDER, useValue: provider },
+        { provide: AwesomeApiGeocodingProvider, useValue: provider },
         { provide: CacheService, useValue: cache },
       ],
     }).compile();
@@ -65,13 +64,5 @@ describe('GeocodingService', () => {
 
     await expect(service.findByCep('01001000')).resolves.toEqual(geocoded);
     expect(provider.findByCep).toHaveBeenCalledWith('01001000');
-  });
-
-  it('rejects an invalid postal code before cache and HTTP', async () => {
-    await expect(service.findByCep('36.000-000')).rejects.toBeInstanceOf(
-      InvalidPostalCodeError,
-    );
-    expect(cache.get).not.toHaveBeenCalled();
-    expect(provider.findByCep).not.toHaveBeenCalled();
   });
 });

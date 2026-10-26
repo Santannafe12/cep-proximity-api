@@ -1,8 +1,10 @@
 import { Test } from '@nestjs/testing';
 import { AwesomeApiClient } from '../../awesome-api/awesome-api.client';
-import { InvalidExternalPayloadError } from '../../common/errors/invalid-external-payload.error';
-import { InvalidPostalCodeError } from '../../common/errors/invalid-postal-code.error';
-import { PostalCodeNotFoundError } from '../../common/errors/postal-code-not-found.error';
+import {
+  InvalidExternalPayloadError,
+  InvalidPostalCodeError,
+  PostalCodeNotFoundError,
+} from '../../common/errors';
 import { AwesomeApiGeocodingProvider } from './awesome-api-geocoding.provider';
 
 describe('AwesomeApiGeocodingProvider', () => {

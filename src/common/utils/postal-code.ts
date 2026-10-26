@@ -1,8 +1,8 @@
-import {
-  POSTAL_CODE_DIGITS_PATTERN,
-  POSTAL_CODE_HYPHENATED_PATTERN,
-  POSTAL_CODE_LENGTH,
-} from '../constants/postal-code.constants';
+const POSTAL_CODE_LENGTH = 8;
+
+const POSTAL_CODE_DIGITS_PATTERN = /^\d{8}$/;
+
+const POSTAL_CODE_HYPHENATED_PATTERN = /^\d{5}-\d{3}$/;
 
 export function isValidPostalCode(value: string): boolean {
   return (

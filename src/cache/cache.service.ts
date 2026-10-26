@@ -1,20 +1,11 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
-import { CACHE_KEY_PREFIX, CACHE_SCAN_COUNT } from './cache.constants';
+import { CacheUnavailableError } from '../common/errors';
 
-export class CacheUnavailableError extends Error {
-  readonly operation: string;
+export const CACHE_KEY_PREFIX = 'nearby-ceps-api:';
 
-  constructor(operation: string, cause?: unknown) {
-    super(`Redis ${operation} failed`);
-    this.name = 'CacheUnavailableError';
-    this.operation = operation;
-    if (cause !== undefined) {
-      this.cause = cause;
-    }
-  }
-}
+export const CACHE_SCAN_COUNT = 100;
 
 @Injectable()
 export class CacheService implements OnModuleDestroy {
@@ -57,17 +48,6 @@ export class CacheService implements OnModuleDestroy {
       await this.client.set(physicalKey, payload, 'EX', ttlSeconds);
     } catch (error: unknown) {
       this.logFailure('write', error);
-    }
-  }
-
-  async delete(key: string): Promise<void> {
-    const physicalKey = this.toPhysicalKey(key);
-
-    try {
-      await this.client.del(physicalKey);
-    } catch (error: unknown) {
-      this.logFailure('delete', error);
-      throw new CacheUnavailableError('delete', error);
     }
   }
 
