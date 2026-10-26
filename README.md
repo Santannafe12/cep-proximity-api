@@ -133,6 +133,8 @@ Se o mesmo CEP aparecer mais de uma vez, permanece a menor distância. A ordena�
 | Geocoding | `geocoding:{cep}` | 7 dias (`604800` s) |
 | Busca | `nearby-ceps:{cep}` | 6 horas (`21600` s) |
 
+A coordenada de um CEP muda raramente. Sete dias evitam repetir `GET /json/{cep}` e aceitam uma coordenada defasada por até uma semana. A vizinhança muda com mais frequência, então seis horas atualizam a busca em troca de mais chamadas a `/search`.
+
 As chaves físicas usam o prefixo `nearby-ceps-api:`. A lista vazia também é gravada.
 
 Se o Redis falhar na leitura ou na escrita durante a consulta, a falha é registrada e a busca segue para a AwesomeAPI. Se falhar na invalidação, a API responde 503.

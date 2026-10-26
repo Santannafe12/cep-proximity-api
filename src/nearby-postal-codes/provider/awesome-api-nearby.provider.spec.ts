@@ -192,6 +192,43 @@ describe('AwesomeApiNearbyProvider', () => {
     expect(client.get).toHaveBeenCalledTimes(2);
   });
 
+  it('rejects a short page when found still expects more items', async () => {
+    client.get.mockImplementation((_path: string, query: SearchQuery) => {
+      if (query.page !== 1) {
+        throw new Error('page 2 must not be requested');
+      }
+      return ok(
+        25,
+        Array.from({ length: 4 }, (_, offset) => rawItem(cepAt(offset))),
+      );
+    });
+
+    await expect(
+      provider.findByCoordinates(latitude, longitude),
+    ).rejects.toBeInstanceOf(ExternalServiceError);
+    expect(client.get).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects an empty page when found still expects more items', async () => {
+    client.get.mockImplementation((_path: string, query: SearchQuery) => {
+      if (query.page === 1) {
+        return ok(
+          25,
+          Array.from({ length: 10 }, (_, offset) => rawItem(cepAt(offset))),
+        );
+      }
+      if (query.page === 2) {
+        return ok(25, []);
+      }
+      throw new Error('page 3 must not be requested');
+    });
+
+    await expect(
+      provider.findByCoordinates(latitude, longitude),
+    ).rejects.toBeInstanceOf(ExternalServiceError);
+    expect(client.get).toHaveBeenCalledTimes(2);
+  });
+
   it('fails when the next page repeats the previous page', async () => {
     const page = Array.from({ length: 10 }, (_, offset) =>
       rawItem(cepAt(offset)),

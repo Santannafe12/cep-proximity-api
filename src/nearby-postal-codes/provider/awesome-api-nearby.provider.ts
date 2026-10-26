@@ -65,6 +65,13 @@ export class AwesomeApiNearbyProvider {
         candidates.push(item);
       }
 
+      if (
+        total !== undefined &&
+        parsed.items.length < expectedPageSize(total, page)
+      ) {
+        throw new ExternalServiceError();
+      }
+
       const lastPage =
         parsed.items.length < SEARCH_PAGE_SIZE ||
         (total !== undefined && page >= Math.ceil(total / SEARCH_PAGE_SIZE));
@@ -75,6 +82,11 @@ export class AwesomeApiNearbyProvider {
 
     throw new ExternalServiceError();
   }
+}
+
+function expectedPageSize(found: number, page: number): number {
+  const remaining = found - (page - 1) * SEARCH_PAGE_SIZE;
+  return Math.max(0, Math.min(SEARCH_PAGE_SIZE, remaining));
 }
 
 function parseSearchPage(payload: unknown): {
